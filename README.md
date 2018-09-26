@@ -1,13 +1,14 @@
 # How to get GA data from GAS
-[check this page](https://qiita.com/rf_p/items/a40468f6414703d63df3)
+[Check this page](https://qiita.com/rf_p/items/a40468f6414703d63df3)
+
 It enables you to get the result of Google Analytics and write it on the spreadsheet.
 
 # Post to Twitter
-Get API keys from [HERE](https://apps.twitter.com/)
+Get API keys from [Twitter Application Management](https://apps.twitter.com/)
 
 Remenber setting "Callback URLs" on your project settings page.
 
-Callback URLs:https://script.google.com/macros/d/[your GAS project code]/usercallback 
+Callback URLs: https//script.google.com/macros/d/(your GAS project code)/usercallback 
 
 (check your project code at [Display > Propaties])
 
