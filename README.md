@@ -6,7 +6,9 @@ It enables you to get the result of Google Analytics and write it on the spreads
 Get API keys from [HERE](https://apps.twitter.com/)
 
 Remenber setting "Callback URLs" on your project settings page.
+
 Callback URLs:https://script.google.com/macros/d/[your GAS project code]/usercallback 
+
 (check your project code at [Display > Propaties])
 
 Twitter Library : 1rgo8rXsxi1DxI_5Xgo_t3irTw1Y5cxl2mGSkbozKsSXf2E_KBBPC3xTF
