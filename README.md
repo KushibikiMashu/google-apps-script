@@ -1,5 +1,5 @@
 # How to get GA data from GAS
-[Check this page](https://qiita.com/rf_p/items/a40468f6414703d63df3)
+[Check tech blog on Qiita](https://qiita.com/rf_p/items/a40468f6414703d63df3)
 
 It enables you to get the result of Google Analytics and write it on the spreadsheet.
 
