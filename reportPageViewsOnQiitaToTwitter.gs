@@ -2,7 +2,7 @@ var CONSUMER_KEY = PropertiesService.getScriptProperties().getProperty("CONSUMER
 var CONSUMER_SECRET = PropertiesService.getScriptProperties().getProperty("CONSUMER_SECRET");
 
 // シートを選択
-var sheet = SpreadsheetApp.getActive().getSheetByName('デイリーPV');
+var sheet = SpreadsheetApp.getActive().getSheetByName('sheetName');
 
 function reportDailyPageViewsTotwitter() {
   // 土曜日はツイートしない
@@ -18,7 +18,7 @@ function reportDailyPageViewsTotwitter() {
 }
 
 function reportWeeklyPageViewsTotwitter() {
-  // 土曜日だけ作動する
+  // 土曜日だけ作動するようにトリガーを設定
   const value = sheet.getRange('B12').getValue();
   
   var tweet = getPageViewsOfOneDayBefore(sheet);

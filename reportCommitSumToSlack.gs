@@ -1,3 +1,7 @@
+var CHANNEL = PropertiesService.getScriptProperties().getProperty("CHANNEL");
+var GITHUB_TOKEN = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
+var WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty("WEBHOOK_URL");
+
 function createMessage() {
   // GithubのAPIを叩く
   const json  = fetchCommitTotal();
@@ -31,8 +35,7 @@ function createMessage() {
   }
 
   // Slackに送る
-  const to = PropertiesService.getScriptProperties().getProperty("TO");
-  sendToSlack(message, to);
+  sendToSlack(message, CHANNEL);
 }
 
 function prepareInfo(branch, total) {
@@ -68,7 +71,6 @@ function prepareInfo(branch, total) {
 
 function fetchCommitTotal() {
   const url   = 'https://api.github.com/graphql';
-  const token = PropertiesService.getScriptProperties().getProperty("TOKEN");
   const oneWeekBefore = formatDate(-7);
 
   const graphql = ' \
@@ -103,7 +105,7 @@ fragment RepoFragment on Repository {\
     'method' : 'post',
     'contentType' : 'application/json',
     'headers' : {
-      'Authorization' : 'Bearer ' +  token
+      'Authorization' : 'Bearer ' +  GITHUB_TOKEN
      },
     'payload' : JSON.stringify({ query : graphql })
   };
@@ -129,8 +131,6 @@ function formatDate(days) {
 }
 
 function sendToSlack(body, channel) {
-  const url = PropertiesService.getScriptProperties().getProperty("WEBHOOK_URL");
-
   // Slackに通知する際の名前、色、画像を決定する
   const data = { 
     'channel' : channel,
@@ -149,5 +149,5 @@ function sendToSlack(body, channel) {
     'payload' : payload
   };
 
-  UrlFetchApp.fetch(url, options);
+  UrlFetchApp.fetch(WEBHOOK_URL, options);
 }
