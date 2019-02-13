@@ -1,8 +1,9 @@
 var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
-var nikkei_kairiritsu_url = 'http://kabusensor.com/nk/';
+var NIKKEI_KAIRIRITSU_SHEET_NAME = '日経乖離率';
+var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
 
 function main() {
-    const res = request(nikkei_kairiritsu_url);
+    const res = request(NIKKEI_KAIRIRITSU_URL);
     const items = getItems(res);
     const target =getTarget(items);
     const rate = getRate(target);
@@ -46,4 +47,27 @@ function getRate(html) {
     const string = html.match(regexp)[0];
     const rate = deleteTags(string, tags);
     return rate;
+}
+
+function getNikkeiKairiritsuSheet() {
+    return SpreadsheetApp.openById(NIKKEI_KAIRIRITSU).getSheetByName(NIKKEI_KAIRIRITSU_SHEET_NAME);
+}
+
+function getTitles(sheet) {
+    return sheet.getRange(1, 1, 1, 4).getValues();
+}
+
+function getToday() {
+    const now = new Date();
+    const year = now.getYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
+    return [[year, month, date]];
+}
+
+function setDate(sheet) {
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    const today = getToday();
+    sheet.getRange(lastRow + 1, 1, 1, 3).setValues(today);
 }
