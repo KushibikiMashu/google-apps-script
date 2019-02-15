@@ -1,153 +1,90 @@
-var CHANNEL = PropertiesService.getScriptProperties().getProperty("CHANNEL");
-var GITHUB_TOKEN = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
-var WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty("WEBHOOK_URL");
+var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
+var nikkei_kairiritsu_url = 'http://kabusensor.com/nk/';
 
-function createMessage() {
-  // GithubのAPIを叩く
-  const json  = fetchCommitTotal();
-  const repos = [json.data.gas];
-  const branch = {
-    "gas" : repos[0].refs.edges 
-  };
-  const total = {
-    "gas" : repos[0].refs.nodes
-  };
+function NikkeiHeikinMain() {
+    // 土日祝日は更新しないという処理を書く
 
-  // JSONを整形し、プロジェクト毎のブランチとコミット数を取得
-  const gas = prepareInfo(branch.gas, total.gas);
-  const projectName = ['Gas'];
-  const project     = [gas];
-
-  const today         = formatDate(0);
-  const oneWeekBefore = formatDate(-7);
-  const time = new Date();
-  const hour = time.getHours();
-  const triggerTime = hour + ':00:00';
-
-  // メッセージの作成
-  var message = '今週もお疲れ様でした😊\n';
-  message += '今週のプロジェクト毎のコミット数を集計しました。\n';
-  message += '(集計期間 ' + oneWeekBefore + ' ' + triggerTime + ' ~ ' + today + ' ' + triggerTime + ')\n\n';
-
-  for (i = 0, len = project.length; i < len; ++i) {
-    message += 'プロジェクト名： *' + projectName[i];
-    message += '* \n ```' + project[i] + '```\n\n';
-  }
-
-  // Slackに送る
-  sendToSlack(message, CHANNEL);
+    const sheet = getNikkeiKairiritsuSheet();
+    setRaw(sheet);
 }
 
-function prepareInfo(branch, total) {
-  const branchName  = [];
-  const commitTotal = [];
-  const data        = [];
+function getItems(html) {
+    const regexp = /<div class="mtop10 under01">.*?<\/div>/g;
+    const itemRegexp = new RegExp(regexp);
+    return html.match(itemRegexp);
+}
 
-  for (var i = 0, len = branch.length; i < len; ++i) {
-    // コミット数が0のブランチを除外    
-    if(parseInt(total[i].target.history.totalCount) === 0) {
-      continue;
+function getTarget(html) {
+    var target = '';
+    const tags = ['<li class="mleft10">', '</li>'];
+    const item = /<li class="mleft10">.*?<\/li>/;
+    const regexp = new RegExp(item);
+    const length = Object.keys(html).length;
+
+    for (var i = 0; i < length; ++i) {
+        var itemWithTag = html[i].match(regexp);
+        var title = deleteTags(itemWithTag[0], tags);
+        if (title === '乖離率(25日)') {
+            target = html[i];
+        }
     }
-
-    // 配列にオブジェクトを格納
-    data.push({
-      "branchName"  : branch[i].node.name,
-      "commitTotal" : total[i].target.history.totalCount
-    });
-  }  
-
-  var info = '';
-  var sum = 0;
-
-  for (var i = 0, len = data.length; i < len; ++i) {
-    info += data[i].branchName + ' のコミット数は ' + data[i].commitTotal + '件' + '\n'; 
-    sum += data[i].commitTotal;
-  }
-
-  info += '合計' + sum + '件です。';
-
-  return info;
+    return target;
 }
 
-function fetchCommitTotal() {
-  const url   = 'https://api.github.com/graphql';
-  const oneWeekBefore = formatDate(-7);
-
-  const graphql = ' \
-{ \
-  gas: repository(owner: "panda_program", name: "gas") {\
-    ...RepoFragment\
-  }\
-}\
-fragment RepoFragment on Repository {\
-  refs(first: 100, refPrefix:"refs/heads/") {\
-    edges {\
-      node {\
-        name\
-      }\
-    }\
-    nodes {\
-        target {\
-      ... on Commit {\
-        history(first: 0, since: "'
-         + oneWeekBefore + 
-        'T09:00:00.000+09:00\"  ) {\
-          totalCount\
-        }\
-       }\
-     }\
-   }\
- }\
-}\
-';
-
-  const options = {
-    'method' : 'post',
-    'contentType' : 'application/json',
-    'headers' : {
-      'Authorization' : 'Bearer ' +  GITHUB_TOKEN
-     },
-    'payload' : JSON.stringify({ query : graphql })
-  };
-
-  const response = UrlFetchApp.fetch(url, options);
-  const json     = JSON.parse(response.getContentText());
-
-  return json;
+function deleteTags(string, tags) {
+    const length = tags.length;
+    for (var i = 0; i < length; ++i) {
+        string = string.replace(tags[i], '');
+    }
+    return string;
 }
 
-/** 日付をフォーマットする
- *  @param  {int} days
- */ @return {string} YYYY-MM-DD
-function formatDate(days) {
-  const now = new Date;
-  const oneWeekBefore = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
-  const year    = oneWeekBefore.getFullYear();
-  const month   = ('0' + (oneWeekBefore.getMonth() + 1)).slice(-2);
-  const date    = ('0' + oneWeekBefore.getDate()).slice(-2);
-  const format  = year+ '-' + month + '-' + date;
-
-  return format;
+function getNumber(html) {
+    const tags = ['<li class="fs20 fbold mleft20">', '</li>'];
+    const item = /<li class="fs20 fbold mleft20">.*?<\/li>/;
+    const regexp = new RegExp(item);
+    const string = html.match(regexp)[0];
+    const rate = deleteTags(string, tags);
+    return rate;
 }
 
-function sendToSlack(body, channel) {
-  // Slackに通知する際の名前、色、画像を決定する
-  const data = { 
-    'channel' : channel,
-    'username' : 'Octocat',
-    'attachments': [{
-      'color': '#fc166a',
-      'text' : body,
-    }],
-    'icon_url' : 'https://assets-cdn.github.com/images/modules/logos_page/Octocat.png'
-  };
+function getRate() {
+    const res = request(nikkei_kairiritsu_url);
+    const items = getItems(res);
+    const target = getTarget(items);
+    return getNumber(target);
+}
 
-  const payload = JSON.stringify(data);
-  const options = {
-    'method' : 'POST',
-    'contentType' : 'application/json',
-    'payload' : payload
-  };
+function getNikkeiKairiritsuSheet() {
+    return SpreadsheetApp.openById(NIKKEI_KAIRIRITSU).getSheetByName('日経乖離率');
+}
 
-  UrlFetchApp.fetch(WEBHOOK_URL, options);
+function getTitles(sheet) {
+    return sheet.getRange(1, 1, 1, 4).getValues();
+}
+
+function getToday() {
+    const now = new Date();
+    const year = now.getYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
+    return [year, month, date];
+}
+
+function setDate(sheet) {
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    const today = getToday();
+    sheet.getRange(lastRow + 1, 1, 1, 3).setValues(today);
+}
+
+function setRaw(sheet) {
+    const today = getToday();
+    const rate = getRate();
+    const values = [];
+    values.push(today);
+    values[0].push(rate);
+
+    const lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow + 1, 1, 1, 4).setValues(values);
 }
