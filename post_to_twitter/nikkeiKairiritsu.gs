@@ -1,5 +1,5 @@
 var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
-var nikkei_kairiritsu_url = 'http://kabusensor.com/nk/';
+var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
 
 function NikkeiHeikinMain() {
     const sheet = getNikkeiKairiritsuSheet();
@@ -47,7 +47,7 @@ function getNumber(html) {
 }
 
 function getRate(){
-    const res = request(nikkei_kairiritsu_url);
+    const res = request(NIKKEI_KAIRIRITSU_URL);
     const items = getItems(res);
     const target =getTarget(items);
     return getNumber(target);
