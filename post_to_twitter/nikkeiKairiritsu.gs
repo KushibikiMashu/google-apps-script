@@ -1,12 +1,9 @@
 var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
-var NIKKEI_KAIRIRITSU_SHEET_NAME = '日経乖離率';
-var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
+var nikkei_kairiritsu_url = 'http://kabusensor.com/nk/';
 
-function main() {
-    const res = request(NIKKEI_KAIRIRITSU_URL);
-    const items = getItems(res);
-    const target =getTarget(items);
-    const rate = getRate(target);
+function NikkeiHeikinMain() {
+    const sheet = getNikkeiKairiritsuSheet();
+    setRaw(sheet);
 }
 
 function getItems(html) {
@@ -40,7 +37,7 @@ function deleteTags(string, tags) {
     return string;
 }
 
-function getRate(html) {
+function getNumber(html) {
     const tags = ['<li class="fs20 fbold mleft20">', '</li>'];
     const item = /<li class="fs20 fbold mleft20">.*?<\/li>/;
     const regexp = new RegExp(item);
@@ -49,8 +46,15 @@ function getRate(html) {
     return rate;
 }
 
+function getRate(){
+    const res = request(nikkei_kairiritsu_url);
+    const items = getItems(res);
+    const target =getTarget(items);
+    return getNumber(target);
+}
+
 function getNikkeiKairiritsuSheet() {
-    return SpreadsheetApp.openById(NIKKEI_KAIRIRITSU).getSheetByName(NIKKEI_KAIRIRITSU_SHEET_NAME);
+    return SpreadsheetApp.openById(NIKKEI_KAIRIRITSU).getSheetByName('日経乖離率');
 }
 
 function getTitles(sheet) {
@@ -62,7 +66,7 @@ function getToday() {
     const year = now.getYear();
     const month = now.getMonth() + 1;
     const date = now.getDate();
-    return [[year, month, date]];
+    return [year, month, date];
 }
 
 function setDate(sheet) {
@@ -70,4 +74,15 @@ function setDate(sheet) {
     const lastColumn = sheet.getLastColumn();
     const today = getToday();
     sheet.getRange(lastRow + 1, 1, 1, 3).setValues(today);
+}
+
+function setRaw(sheet){
+    const today = getToday();
+    const rate = getRate();
+    const values = [];
+    values.push(today);
+    values[0].push(rate);
+
+    const lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow + 1, 1, 1, 4).setValues(values);
 }
