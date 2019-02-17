@@ -2,6 +2,11 @@ var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIK
 var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
 
 function NikkeiHeikinMain() {
+    const today = new Date();
+    if (isWeekend(today) || isHoliday(today)) {
+        return;
+    }
+
     const sheet = getNikkeiKairiritsuSheet();
     setRaw(sheet);
 }
@@ -19,7 +24,7 @@ function getTarget(html) {
     const regexp = new RegExp(item);
     const length = Object.keys(html).length;
 
-    for (var i = 0; i < length; ++i){
+    for (var i = 0; i < length; ++i) {
         var itemWithTag = html[i].match(regexp);
         var title = deleteTags(itemWithTag[0], tags);
         if (title === '乖離率(25日)') {
@@ -31,7 +36,7 @@ function getTarget(html) {
 
 function deleteTags(string, tags) {
     const length = tags.length;
-    for (var i = 0; i < length; ++i){
+    for (var i = 0; i < length; ++i) {
         string = string.replace(tags[i], '');
     }
     return string;
@@ -46,10 +51,10 @@ function getNumber(html) {
     return rate;
 }
 
-function getRate(){
+function getRate() {
     const res = request(NIKKEI_KAIRIRITSU_URL);
     const items = getItems(res);
-    const target =getTarget(items);
+    const target = getTarget(items);
     return getNumber(target);
 }
 
@@ -76,7 +81,7 @@ function setDate(sheet) {
     sheet.getRange(lastRow + 1, 1, 1, 3).setValues(today);
 }
 
-function setRaw(sheet){
+function setRaw(sheet) {
     const today = getToday();
     const rate = getRate();
     const values = [];
@@ -85,4 +90,15 @@ function setRaw(sheet){
 
     const lastRow = sheet.getLastRow();
     sheet.getRange(lastRow + 1, 1, 1, 4).setValues(values);
+}
+
+function isWeekend(today) {
+    const day = today.getDay();
+    return (day === 6) || (day === 0);
+}
+
+function isHoliday(today) {
+    const calendars = CalendarApp.getCalendarsByName('日本の祝日');
+    const count = calendars[0].getEventsForDay(today).length;
+    return count !== 0;
 }
