@@ -1,14 +1,26 @@
 var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
 var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
 
-function NikkeiHeikinMain() {
+function nikkeiHeikinMain() {
+    const today = new Date();
+    if (isWeekend(today) || isHoliday(today)) {
+        return;
+    }
+    const sheet = getNikkeiKairiritsuSheet();
+    setRaw(sheet);
+}
+
+function postNikkeiHeikinTweet() {
     const today = new Date();
     if (isWeekend(today) || isHoliday(today)) {
         return;
     }
 
     const sheet = getNikkeiKairiritsuSheet();
-    setRaw(sheet);
+    const body = getBody(sheet);
+    Logger.log(body);
+    postTweet(body);
+
 }
 
 function getItems(html) {
@@ -101,4 +113,20 @@ function isHoliday(today) {
     const calendars = CalendarApp.getCalendarsByName('日本の祝日');
     const count = calendars[0].getEventsForDay(today).length;
     return count !== 0;
+}
+
+function getRecentRates(sheet) {
+    const lastRow = sheet.getLastRow();
+    const values = sheet.getRange(lastRow - 7, 2, 7, 3).getValues();
+    return values;
+}
+
+function getBody(sheet) {
+    var body = '日経平均📈' + "\r\n" + '25日平均線乖離率' + "\r\n";
+    const rates = getRecentRates(sheet);
+    for (var row in rates) {
+        var percentage = (rates[row][2] * 100).toString() + '％';
+        body += rates[row][0] + '/' + rates[row][1] + ' : ' + percentage + "\r\n";
+    }
+    return body;
 }
