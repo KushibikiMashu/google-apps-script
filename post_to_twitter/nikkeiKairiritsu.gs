@@ -6,6 +6,7 @@ function nikkeiHeikinMain() {
     if (isWeekend(today) || isHoliday(today)) {
         return;
     }
+
     const sheet = getNikkeiKairiritsuSheet();
     setRaw(sheet);
 }
@@ -18,9 +19,7 @@ function postNikkeiHeikinTweet() {
 
     const sheet = getNikkeiKairiritsuSheet();
     const body = getBody(sheet);
-    Logger.log(body);
     postTweet(body);
-
 }
 
 function getItems(html) {
@@ -117,14 +116,15 @@ function isHoliday(today) {
 
 function getRecentRates(sheet) {
     const lastRow = sheet.getLastRow();
-    const values = sheet.getRange(lastRow - 7, 2, 7, 3).getValues();
+    const values = sheet.getRange(lastRow - 7, 2, 8, 3).getValues();
     return values;
 }
 
 function getBody(sheet) {
-    var body = '日経平均📈' + "\r\n" + '25日平均線乖離率' + "\r\n";
+    var body = '今日の乖離率をお知らせします📈' + "\r\n" + '(日経平均25日移動平均線)' + "\r\n" + "\r\n";
     const rates = getRecentRates(sheet);
-    for (var row in rates) {
+    const reversed = rates.reverse();
+    for (var row in reversed) {
         var percentage = (rates[row][2] * 100).toString() + '％';
         body += rates[row][0] + '/' + rates[row][1] + ' : ' + percentage + "\r\n";
     }
