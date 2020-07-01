@@ -2,6 +2,7 @@ const TOKEN = PropertiesService.getScriptProperties().getProperty('LINE_NOTIFY_T
 const ENDPOINT = 'https://notify-api.line.me/api/notify'
 
 const activeSheet = SpreadsheetApp.getActiveSpreadsheet()
+const isSunday = new Date().getDate() === 6
 
 function getData() {
   const ss = activeSheet.getSheetByName('ポートフォリオ')
@@ -26,6 +27,10 @@ function getData() {
 
 // SSに書き込む
 function write() {
+  if (isSunday) {
+    return
+  }
+
   const date = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd')
   const {dollar, yen, hkd, sum, riskSum} = getData()
   const record = [[date, sum, riskSum, dollar, yen, hkd]]
@@ -40,7 +45,6 @@ function write() {
 function getMessage() {
   const {dollar, yen, hkd, sum, dollerRate, HkdRate} = getData()
 
-  Logger.log(range, numRows)
   Logger.log([dollar, yen, sum, dollerRate, HkdRate])
   return `${dollar} / ${yen} / ${hkd} / ${sum} / ${dollerRate} / ${HkdRate}`
 }
@@ -65,6 +69,10 @@ function getPayload() {
 }
 
 function send() {
+  if (isSunday) {
+    return
+  }
+
   const options = {
     "method": "POST",
     "headers": getHeaders(),
