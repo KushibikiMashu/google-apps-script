@@ -2,7 +2,7 @@ const TOKEN = PropertiesService.getScriptProperties().getProperty('LINE_NOTIFY_T
 const ENDPOINT = 'https://notify-api.line.me/api/notify'
 
 const activeSheet = SpreadsheetApp.getActiveSpreadsheet()
-const isSunday = new Date().getDate() === 6
+const isSunday = new Date().getDay() === 0
 
 function getData() {
   const ss = activeSheet.getSheetByName('ポートフォリオ')
