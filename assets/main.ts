@@ -20,9 +20,17 @@ function getData() {
     hkd: getCurrency(13),
     sum: getSum(1),
     riskSum: getSum(2),
-    dollerRate: getRate(15),
+    dollarRate: getRate(15),
     HkdRate: getRate(16).toString().slice(0, 5),
   }
+}
+
+// LINEメッセージにする
+function getMessage() {
+  const {dollar, yen, hkd, sum, dollarRate, HkdRate} = getData()
+
+  Logger.log([dollar, yen, sum, dollarRate, HkdRate])
+  return `${dollar} / ${yen} / ${hkd} / ${sum} / ${dollarRate} / ${HkdRate}`
 }
 
 // SSに書き込む
@@ -39,14 +47,6 @@ function write() {
   const lastRow = ss.getLastRow()
   // 先頭のセルの行、カラム、そして行数と列数
   ss.getRange(lastRow + 1, 1, 1, 6).setValues(record)
-}
-
-// LINEメッセージにする
-function getMessage() {
-  const {dollar, yen, hkd, sum, dollerRate, HkdRate} = getData()
-
-  Logger.log([dollar, yen, sum, dollerRate, HkdRate])
-  return `${dollar} / ${yen} / ${hkd} / ${sum} / ${dollerRate} / ${HkdRate}`
 }
 
 function getHeaders() {
