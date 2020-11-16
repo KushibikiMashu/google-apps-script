@@ -1,12 +1,13 @@
 var NIKKEI_KAIRIRITSU = PropertiesService.getScriptProperties().getProperty("NIKKEI_KAIRIRITSU");
 var NIKKEI_KAIRIRITSU_URL = 'http://kabusensor.com/nk/';
+var TOKEN = PropertiesService.getScriptProperties().getProperty("LINE_SELLING_RATIO_GROUP");
+var LINE_ENDPOINT = 'https://notify-api.line.me/api/notify';
 
 function nikkeiHeikinMain() {
     const today = new Date();
     if (isWeekend(today) || isHoliday(today)) {
         return;
     }
-
     const sheet = getNikkeiKairiritsuSheet();
     setRaw(sheet);
 }
@@ -95,6 +96,7 @@ function setDate(sheet) {
 function setRaw(sheet) {
     const today = getToday();
     const rate = getRate();
+  Logger.log(rate)
     const values = [];
     values.push(today);
     values[0].push(rate);
@@ -123,10 +125,54 @@ function getRecentRates(sheet) {
 function getBody(sheet) {
     var body = '今日の乖離率をお知らせします📈' + "\r\n" + '(日経平均25日移動平均線)' + "\r\n" + "\r\n";
     const rates = getRecentRates(sheet);
-    const reversed = rates.reverse();
+  const reversed = rates.reverse();
     for (var row in reversed) {
         var percentage = (rates[row][2] * 100).toString() + '％';
         body += rates[row][0] + '/' + rates[row][1] + ' : ' + percentage + "\r\n";
     }
     return body;
+}
+
+// LINEに送る
+function sendToLine() {
+  send()
+}
+
+function getMessage() {
+  const sheet = getNikkeiKairiritsuSheet();
+  return getBody(sheet);
+}
+
+function getHeaders() {
+    return {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Bearer " + TOKEN
+    };
+}
+
+function getPayload() {
+    var params = {
+        'message': getMessage()
+    };
+    var body = [];
+    Object.keys(params).map(function (key) {
+        body.push(key + '=' + encodeURI(params[key]));
+    });
+    return body.join("&");
+}
+
+function send() {
+  const today = new Date();
+  if (isWeekend(today) || isHoliday(today)) {
+    return;
+  }
+  var options = {
+    "method": "POST",
+    "headers": getHeaders(),
+    "payload": getPayload(),
+    "muteHttpExceptions": true
+  };
+  Logger.log(getPayload());
+  var res = UrlFetchApp.fetch(LINE_ENDPOINT, options);
+  Logger.log(res.getContentText());
 }
