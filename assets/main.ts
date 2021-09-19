@@ -6,7 +6,7 @@ const isSunday = new Date().getDay() === 0
 
 function getData() {
   const ss = activeSheet.getSheetByName('ポートフォリオ')
-  const range = ss.getRange('B2:R16')
+  const range = ss.getRange('B2:R19')
   // O列の埋まっているセルで、一番下の行の数字を取得
   const numRows = ss.getRange('O:O').getValues().filter(String).length - 1
 
